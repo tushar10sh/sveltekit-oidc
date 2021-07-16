@@ -1,16 +1,19 @@
 # sveltekit + keycloak OpenID connect
 This project aims to integrate OpenID confidential flow using Sveltekit. Once login is complete, Navigation to protected pages of app don't require a request to Authorization Server (Keycloak in our instance). Sveltekit hooks take care of :
-    l. Validating the client access_token validity
-    l. Renewing the token in case of token expiry 
-    l. Offline Auth server error handling
-    l. Setting valid user information ( access_token, refresh_token, userid etc. ) in form of cookies
-    l. Populating session variable with user information
-    l. If Auth server has redirected to application, creates a backchannel machine to machine request for exchanging auth_code with access_token.
+
+    * Validating the client access_token validity
+    * Renewing the token in case of token expiry 
+    * Offline Auth server error handling
+    * Setting valid user information ( access_token, refresh_token, userid etc. ) in form of cookies
+    * Populating session variable with user information
+    * If Auth server has redirected to application, creates a backchannel machine to machine request for exchanging auth_code with access_token.
+
 When the client side kicks in, it: 
-    l. Checks for user and Auth server information in session variable
-    l. In case, no user is found or some error has occured on server-side, populate AuthStore with proper messages
-    l. Provides Login, Logout functionality
-    l. Initiates a front channel Authorization flow, in case of protected component via Sveletkit Load method.
+
+    * Checks for user and Auth server information in session variable
+    * In case, no user is found or some error has occured on server-side, populate AuthStore with proper messages
+    * Provides Login, Logout functionality
+    * Initiates a front channel Authorization flow, in case of protected component via Sveletkit Load method.
 # Application Screenshots
 
 ### Login / Index page 
