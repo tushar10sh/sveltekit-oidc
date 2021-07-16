@@ -80,7 +80,34 @@ export async function renewOIDCToken(refresh_token: string, oidcBaseUrl: string,
         return data;
     } else {
         const data: OIDCResponse = await res.json();
-        console.log('response not ok');
+        console.log('renew response not ok');
+        console.log(data);
+        return data;
+    }
+}
+
+export async function introspectOIDCToken(access_token: string, oidcBaseUrl: string, clientId: string, clientSecret: string, username: string): Promise<any>  {
+    let formBody = [
+        'token=' + access_token,
+        'client_id=' + clientId,
+        'client_secret=' + clientSecret,
+        'username=' + username,
+    ];
+
+    const res = await fetch(`${oidcBaseUrl}/token/introspect`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: formBody.join('&')
+    });
+
+    if ( res.ok ) {
+        const tokenIntrospect = await res.json() 
+        return tokenIntrospect;
+    } else {
+        const data: OIDCResponse = await res.json();
+        console.log('introspect response not ok');
         console.log(data);
         return data;
     }

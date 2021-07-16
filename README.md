@@ -1,6 +1,8 @@
 # sveltekit + keycloak OpenID connect
 
-![Homepage](https://github.com/tushar10sh/svelte-oidc/blob/main/docs/index_page.png?raw=true)
+![Login Page](https://github.com/tushar10sh/svelte-oidc/blob/main/docs/Login_page.png?raw=true)
+![Keycloak Auth](https://github.com/tushar10sh/svelte-oidc/blob/main/docs/keycloak_redirect_page.png?raw=true)
+![Index page with JWT](https://github.com/tushar10sh/svelte-oidc/blob/main/docs/Index_page_with_token.png?raw=true)
 
 ## Developing
 

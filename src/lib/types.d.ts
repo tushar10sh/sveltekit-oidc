@@ -7,6 +7,7 @@ export interface Locals {
 	access_token: string;
 	refresh_token: string;
     authError?: AuthError;
+	user?: any;
     retries?: number;
 }
 
