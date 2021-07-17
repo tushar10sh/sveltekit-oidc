@@ -27,9 +27,10 @@
             }
         }
     }
+
 </script>
 
-<main class="h-screen w-screen flex flex-col justify-center items-center bg-gray-800">
+<main class="h-screen-minus-navbar w-screen flex flex-col justify-center items-center bg-gray-800">
     
     <h1 class="mb-4 p-4 text-5xl bg-pink-600 text-gray-200 font-semibold rounded-md shadow-md">Sveltekit + OpenID Auth</h1>
 
@@ -39,7 +40,7 @@
             <div class="flex flex-row justify-end items-start w-100">
                 <p access-token class="break-words w-100 max-w-5xl m-2 border-none overflow-visible font-mono text-gray-600" bind:this={access_token_elem}>{$accessToken}</p>
                 <div class="flex flex-col justify-start items-center w-100">
-                    <button class="px-4 py-2 rounded-md shadow-md bg-gray-200 text-gray-800 font-semibold m-2 transition-colors duration-300 ease-in-out hover:bg-gray-700 hover:text-gray-100" on:click|preventDefault={copyAccessTokenToClipboard}>Copy</button>
+                    <button class="btn btn-primary" on:click|preventDefault={copyAccessTokenToClipboard}>Copy</button>
                     {#if is_access_token_copied }
                         <div class="bg-gray-800 text-green-300 rounded-md p-2 text-xs">Copied!</div>
                     {/if}

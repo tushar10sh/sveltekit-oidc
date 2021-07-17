@@ -10,11 +10,11 @@ export function isTokenExpired(jwt: string): boolean {
 	return ( new Date().getTime()/1000 > (data.exp - tokenTimeSkew) ) ;
 }
 
-export function initiateFrontChannelOIDCAuth(browser: boolean, oidcBaseUrl: string, clientId: string, client_scopes: string, appRedirectUrl: string): LoadOutput {
+export function initiateFrontChannelOIDCAuth(browser: boolean, oidcBaseUrl: string, clientId: string, client_scopes: string, appRedirectUrl: string, request_path?: string, request_params?: Record<string, string>): LoadOutput {
     const oidcRedirectUrlWithParams = [
         `${oidcBaseUrl}/auth?scope=${browser ? encodeURIComponent(client_scopes) : client_scopes}`,
         `client_id=${clientId}`,
-        `redirect_uri=${browser ? encodeURIComponent(appRedirectUrl) : appRedirectUrl}`,
+        `redirect_uri=${browser ? encodeURIComponent(appRedirectUrl + (request_path ? request_path : '/') ) : (appRedirectUrl + (request_path ? request_path : '/') )}`,
         'response_type=code',
         'response_mode=query',
     ];

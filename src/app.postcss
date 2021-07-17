@@ -1,5 +1,29 @@
 @tailwind base;
 /* Write your global styles here, in PostCSS syntax */
 @tailwind components;
-@tailwind utilities
+@tailwind utilities;
+
+@layer components {
+    .btn  {
+        @apply px-4 py-2 rounded-md shadow-md font-semibold m-2 transition-colors duration-300 ease-in-out 
+    }
+    .btn-primary {
+        @apply bg-gray-200 text-gray-800 hover:bg-gray-700 hover:text-gray-100
+    }
+
+    .nav-link {
+        border-top-color: transparent;
+        @apply border-t-4 border-b-4 border-opacity-0 flex flex-col justify-center items-center h-full hover:bg-gray-600 hover:text-gray-100
+    }
+    .nav-active {
+        @apply border-b-green-400 border-opacity-100 
+    }
+    .nav-link > a {
+        @apply px-4 py-2 h-full flex flex-col justify-center items-center
+    }
+
+    .h-screen-minus-navbar {
+        height: calc(100vh - 48px);
+    }
+}
 

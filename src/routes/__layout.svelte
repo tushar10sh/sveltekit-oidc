@@ -1,14 +1,17 @@
 <script>
     import "../app.postcss";
     import Keycloak from '$lib/keycloak/Keycloak.svelte';
+    import Header from '$lib/shared/Header/index.svelte';
 </script>
 
+
+<Header></Header>
 <Keycloak
     issuer={import.meta.env.VITE_OIDC_ISSUER}
     client_id={import.meta.env.VITE_OIDC_CLIENT_ID}
     scope={import.meta.env.VITE_OIDC_CLIENT_SCOPE}
     redirect_uri={import.meta.env.VITE_OIDC_REDIRECT_URI}
+    post_logout_redirect_uri={import.meta.env.VITE_OIDC_POST_LOGOUT_REDIRECT_URI}
     >
     <slot></slot>
 </Keycloak>
-<!-- <slot></slot> -->

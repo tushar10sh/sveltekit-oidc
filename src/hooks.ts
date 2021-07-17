@@ -68,7 +68,7 @@ export const handle: Handle = async ({ request, resolve }) => {
 
 	if ( request.query.get('code') && (!request.locals?.access_token || isTokenExpired(request.locals.access_token)) ) {
     
-		const jwts: OIDCResponse = await initiateBackChannelOIDCAuth(request.query.get('code'), clientId, clientSecret, oidcBaseUrl, appRedirectUrl);
+		const jwts: OIDCResponse = await initiateBackChannelOIDCAuth(request.query.get('code'), clientId, clientSecret, oidcBaseUrl, appRedirectUrl + request.path);
 		if ( jwts.access_token ) {
 			request.locals.access_token = jwts.access_token;
 		}
