@@ -2,15 +2,15 @@
     import * as AuthStore from './AuthStore';
 	import { initiateFrontChannelOIDCAuth } from './utils'; 
 	import type { Load } from '@sveltejs/kit';
-	import type { OidcContextClientPromise } from '$lib/types';
+	import type { OidcContextClientFn, OidcContextClientPromise } from '$lib/types';
 
 	export const OIDC_CONTEXT_CLIENT_PROMISE = {};
 	export const OIDC_CONTEXT_REDIRECT_URI: string = ''; 
 	export const OIDC_CONTEXT_POST_LOGOUT_REDIRECT_URI: string = '';
 	
-	export async function login(oidcPromise) {
+	export async function login(oidcPromise: OidcContextClientPromise) {
 		try {
-			const oidc_func = await oidcPromise;
+			const oidc_func: OidcContextClientFn = await oidcPromise;
 			const { session, issuer, redirect, page } = oidc_func();
 			console.log(session, issuer, redirect, page);
 			if ( session?.auth_server_online === false ) {
@@ -73,7 +73,7 @@
 		}
 	}
 
-	export async function logout(oidcPromise, post_logout_redirect_uri) {
+	export async function logout(oidcPromise: OidcContextClientPromise, post_logout_redirect_uri: string) {
 		const oidc_func = await oidcPromise;
 		const { issuer } = oidc_func();
 		const logout_uri = `${issuer}/protocol/openid-connect/logout?redirect_uri=${encodeURIComponent(post_logout_redirect_uri)}`;
@@ -95,14 +95,16 @@
     export let scope:string;
 	const oidcBaseUrl = `${issuer}/protocol/openid-connect`;
 
-	const oidc_auth_promise: OidcContextClientPromise = Promise.resolve( (request_path?: string, request_params?: Record<string, string>) => {
+	const oidc_func: OidcContextClientFn = (request_path?: string, request_params?: Record<string, string>) => {
 		return {
 			redirect: initiateFrontChannelOIDCAuth(browser, oidcBaseUrl, client_id, scope, redirect_uri, request_path, request_params).redirect,
 			session: $session,
 			issuer,
 			page: $page
 		}
-	});
+	};
+	const oidc_auth_promise: OidcContextClientPromise = Promise.resolve( oidc_func );
+	
 	setContext(OIDC_CONTEXT_CLIENT_PROMISE, oidc_auth_promise);
 	setContext(OIDC_CONTEXT_REDIRECT_URI, redirect_uri);
 	setContext(OIDC_CONTEXT_POST_LOGOUT_REDIRECT_URI, post_logout_redirect_uri);

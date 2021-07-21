@@ -10,12 +10,15 @@ export interface Locals {
 	user?: any;
     retries?: number;
 }
-export type OidcContextClientPromise = Promise<(request_path?: string) => {
+
+export type OidcContextClientFn = (request_path?: string, request_params?: Record<string, string>) => {
     redirect: string;
     session: any;
     issuer: string;
     page: Page;
-}>
+}
+
+export type OidcContextClientPromise = Promise<OidcContextClientFn>
 
 export interface OIDCSuccessResponse {
 	access_token: string;
