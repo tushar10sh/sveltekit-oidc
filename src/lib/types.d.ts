@@ -16,6 +16,7 @@ export type OidcContextClientFn = (request_path?: string, request_params?: Recor
     session: any;
     issuer: string;
     page: Page;
+    client_id: string;
 }
 
 export type OidcContextClientPromise = Promise<OidcContextClientFn>
