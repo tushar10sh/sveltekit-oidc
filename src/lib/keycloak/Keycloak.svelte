@@ -10,7 +10,7 @@
 	
 	export async function login(oidcPromise: OidcContextClientPromise) {
 		try {
-			const oidc_func: OidcContextClientFn = await oidcPromise;
+			const oidc_func = await oidcPromise;
 			const { session, issuer, redirect, page } = oidc_func();
 			console.log(session, issuer, redirect, page);
 			if ( session?.auth_server_online === false ) {
@@ -75,9 +75,23 @@
 
 	export async function logout(oidcPromise: OidcContextClientPromise, post_logout_redirect_uri: string) {
 		const oidc_func = await oidcPromise;
-		const { issuer } = oidc_func();
-		const logout_uri = `${issuer}/protocol/openid-connect/logout?redirect_uri=${encodeURIComponent(post_logout_redirect_uri)}`;
-		window.location.assign(logout_uri);
+		const { issuer, client_id } = oidc_func();
+		const logout_endpoint = `${issuer}/protocol/openid-connect/logout`;
+		const logout_uri = `${issuer}/protocol/openid-connect/logout?redirect_uri=${encodeURIComponent(post_logout_redirect_uri + '?event=logout')}`;
+
+		const res = await fetch(logout_endpoint, {
+			method: 'POST',
+			headers: {
+				'Authorization': `Bearer ${AuthStore.accessToken}`,
+				'Content-Type': 'application/x-www-form-urlencoded'
+			},
+			body: `client_id=${client_id}&refresh_token=${AuthStore.refreshToken}`
+		});
+		if ( res.ok ) {
+			window.location.assign(logout_uri);
+		} else {
+			window.location.assign(logout_uri);
+		}
 	}
 </script>
 
@@ -100,11 +114,11 @@
 			redirect: initiateFrontChannelOIDCAuth(browser, oidcBaseUrl, client_id, scope, redirect_uri, request_path, request_params).redirect,
 			session: $session,
 			issuer,
-			page: $page
+			page: $page,
+			client_id
 		}
-	};
+	}
 	const oidc_auth_promise: OidcContextClientPromise = Promise.resolve( oidc_func );
-	
 	setContext(OIDC_CONTEXT_CLIENT_PROMISE, oidc_auth_promise);
 	setContext(OIDC_CONTEXT_REDIRECT_URI, redirect_uri);
 	setContext(OIDC_CONTEXT_POST_LOGOUT_REDIRECT_URI, post_logout_redirect_uri);
@@ -128,6 +142,9 @@
 					AuthStore.isAuthenticated.set(false);
 					AuthStore.accessToken.set(null);
 					AuthStore.refreshToken.set(null);
+					if ( window.location.toString().includes('event=logout') ) {
+						window.location.assign($page.path);
+					}
 				} else {
 					AuthStore.isAuthenticated.set(true);
 					AuthStore.accessToken.set($session.access_token);
@@ -148,6 +165,9 @@
 				error: 'auth_server_conn_error',
 				error_description: 'Auth Server Connection Error'
 			});
+			if ( window.location.toString().includes('event=logout') ) {
+				window.location.assign($page.path);
+			}
 		}
 	}
     onMount(handleMount);

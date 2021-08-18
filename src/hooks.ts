@@ -1,6 +1,17 @@
 import cookie from 'cookie';
 import type { Handle, GetSession } from '@sveltejs/kit';
-import { initiateBackChannelOIDCAuth, isTokenExpired, renewOIDCToken, introspectOIDCToken } from '$lib/keycloak/utils';
+import { 
+	initiateBackChannelOIDCAuth,
+	initiateBackChannelOIDCLogout,
+	isTokenExpired,
+	renewOIDCToken,
+	introspectOIDCToken,
+	populateRequestLocals,
+	populateResponseHeaders,
+	injectCookies,
+	parseUser
+} from '$lib/keycloak/utils';
+
 import type { OIDCResponse } from '$lib/types';
 
 const oidcBaseUrl = `${import.meta.env.VITE_OIDC_ISSUER}/protocol/openid-connect`;
@@ -8,127 +19,94 @@ const clientId = import.meta.env.VITE_OIDC_CLIENT_ID;
 const clientSecret = import.meta.env.VITE_OIDC_CLIENT_SECRET;
 let appRedirectUrl = import.meta.env.VITE_OIDC_REDIRECT_URI;
 
+
+const isAuthInfoInvalid = (obj) => {
+	return (!obj?.userid || !obj?.access_token || !obj?.refresh_token || !obj?.user );
+}
+
 export const handle: Handle = async ({ request, resolve }) => {
 
 	console.log('Request path:', request.path);
 	const cookies = cookie.parse(request.headers.cookie || '');
 	const userInfo = cookies?.userInfo ? JSON.parse(cookies.userInfo) : {};
-	
     request.locals.retries = 0;
 	request.locals.authError = {
 		error: null,
 		error_description: null
 	};
 
-	if ( request.headers?.userid ) {
-		request.locals.userid = request.headers.userid;
-	} else {
-		if ( userInfo?.userid && userInfo?.userid !== "null" && userInfo?.userid !== "undefined" ) {
-			request.locals.userid = userInfo.userid;
-		} else {
-			request.locals.userid = '';
-		}
-	}
+	populateRequestLocals(request, 'userid', userInfo, '');
+	populateRequestLocals(request, 'access_token', userInfo, null);
+	populateRequestLocals(request, 'refresh_token', userInfo, null);
 
-	if ( request.headers?.access_token ) {
-		request.locals.access_token = request.headers.access_token;
-	} else {
-		if ( userInfo?.access_token && userInfo?.access_token !== "null" && userInfo?.access_token !== "undefined" ) {
-			request.locals.access_token = userInfo.access_token;
-		}
-	}
+	let ssr_redirect = false;
+	let ssr_redirect_uri = '/';
 
-	if ( request.headers?.refresh_token ) {
-		request.locals.refresh_token = request.headers.refresh_token;
-	} else {
-		if ( userInfo?.refresh_token && userInfo?.refresh_token !== "null" && userInfo?.refresh_token !== "undefined" ) {
-			request.locals.refresh_token = userInfo.refresh_token;
-		}
-	}
-	let userJsonParseFailed = false;
-	try {
-		if ( request.headers?.user ) {
-			request.locals.user = JSON.parse(request.headers.user);
-		} else {
-			if ( userInfo?.user && userInfo?.user !== "null" && userInfo?.user !== "undefined") {
-				request.locals.user = JSON.parse(userInfo.user);
-				if ( !request.locals.user) {
-					userJsonParseFailed = true;
-				}
-			} else {
-				throw {
-					error: 'invalid_user_object'
-				}
+	// Handling user logout
+	if ( request.query.get('event') === 'logout' ) {
+		await initiateBackChannelOIDCLogout(request.locals.access_token, clientId, clientSecret, oidcBaseUrl, request.locals.refresh_token);
+		request.locals.access_token = null;
+		request.locals.refresh_token = null;
+		request.locals.authError  = {
+			error: 'invalid_session',
+			error_description: 'Session is no longer active'
+		};
+		request.locals.user = null;
+		ssr_redirect_uri = request.path;
+		let response =  {
+			status: 302,
+			headers: {
+				'Location': ssr_redirect_uri
 			}
 		}
-	} catch {
-		userJsonParseFailed = true;
-		request.locals.user = null;
+		try {
+			response = populateResponseHeaders(request, response);
+			response = injectCookies(request, response);
+		} catch(e) {}
+		return response;
 	}
 
-	if ( request.query.get('code') && (!request.locals?.access_token || isTokenExpired(request.locals.access_token)) ) {
-    
+
+	// Parsing user object
+	const userJsonParseFailed = parseUser(request, userInfo);
+		
+	// Backchannel Authorization code flow
+	if ( request.query.get('code') && (!isAuthInfoInvalid(request.locals) || isTokenExpired(request.locals.access_token)) ) {
 		const jwts: OIDCResponse = await initiateBackChannelOIDCAuth(request.query.get('code'), clientId, clientSecret, oidcBaseUrl, appRedirectUrl + request.path);
-		if ( jwts.access_token ) {
-			request.locals.access_token = jwts.access_token;
+		if ( jwts.error ) {
+			request.locals.authError = {
+				error: jwts.error,
+				error_description: jwts.error_description
+			}
+		} else {
+			request.locals.access_token = jwts?.access_token;
+			request.locals.refresh_token = jwts?.refresh_token;
 		}
-		if ( jwts.refresh_token ) {
-			request.locals.refresh_token = jwts.refresh_token;
-		}
-        if ( jwts.error ) {
-            request.locals.authError = {
-                error: jwts.error,
-                error_description: jwts.error_description
-            }
-        }
+		ssr_redirect = true;
+		ssr_redirect_uri = request.path;
 	}
 	
 	if (request.query.has('_method')) {
 		request.method = request.query.get('_method').toUpperCase();
 	}
-    
-    const tokenExpired = isTokenExpired(request.locals.access_token);
+	
+	const tokenExpired = isTokenExpired(request.locals.access_token);
 	const beforeAccessToken = request.locals.access_token;
-	const response = await resolve(request);
+	let response = await resolve(request);
 	const afterAccessToken = request.locals.access_token;
 
-	if ( !request.headers?.userid || !request.headers?.access_token || !request.headers?.refresh_token || !request.headers?.user || tokenExpired) {
-		
-		if ( request.locals.user ) {
-			response.headers['user'] = `${JSON.stringify(request.locals.user)}`;
-		}
-
-		if ( request.locals.userid ) {
-			response.headers['userid'] = `${request.locals.userid}`;
-		}
-		
-		if ( request.locals.access_token ) {
-			response.headers['access_token'] = `${request.locals.access_token}`;
-		}
-		if ( request.locals.refresh_token ) {
-			response.headers['refresh_token'] = `${request.locals.refresh_token}`;
-		}
+	if ( ( isAuthInfoInvalid(request.headers) || tokenExpired) ) {
+		response = populateResponseHeaders(request, response);
 	}
-
-	if ( !userInfo?.userid || !userInfo?.access_token || !userInfo?.refresh_token || (request.locals?.user && userJsonParseFailed ) || tokenExpired || (beforeAccessToken!==afterAccessToken) ) {
+	if ( ( isAuthInfoInvalid(userInfo) || (request.locals?.user && userJsonParseFailed ) || tokenExpired || (beforeAccessToken!==afterAccessToken)) ) {
 		// if this is the first time the user has visited this app,
 		// set a cookie so that we recognise them when they return
-		let responseCookies = {};
-		let serialized_user = null;
-
-		try{
-			serialized_user = JSON.stringify(request.locals.user);
-		} catch {
-			request.locals.user = null;
-		}
-		responseCookies = {
-			userid: `${request.locals.userid}`,
-			user: `${serialized_user}`
-		};
-		responseCookies['access_token'] = `${request.locals.access_token}`;
-		responseCookies['refresh_token'] = `${request.locals.refresh_token}`;
-		response.headers['set-cookie'] = `userInfo=${JSON.stringify(responseCookies)}; Path=/; HttpOnly;`
+		response = injectCookies(request, response);
 	}
+	if ( ssr_redirect ) {
+		response.status = 302;
+		response.headers['Location'] = ssr_redirect_uri;
+	} 
 	return response;
 };
 
@@ -136,14 +114,13 @@ export const handle: Handle = async ({ request, resolve }) => {
 /** @type {import('@sveltejs/kit').GetSession} */
 export const getSession: GetSession = async (request) => {
 	try {
-		
 		if ( request.locals?.access_token ) {
-			
 			if ( request.locals.user && request.locals.userid && !isTokenExpired(request.locals.access_token) ) {
 				let isTokenActive = true;
 				try {
 					const tokenIntrospect = await introspectOIDCToken(request.locals.access_token, oidcBaseUrl, clientId, clientSecret, request.locals.user.preferred_username )
 					isTokenActive = Object.keys(tokenIntrospect).includes('active') ? tokenIntrospect.active : false;
+					console.log('token active ', isTokenActive);
 				} catch(e) {
 					isTokenActive = false;
 					console.error('Error while fetching introspect details', e);
