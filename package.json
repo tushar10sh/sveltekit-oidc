@@ -1,30 +1,42 @@
 {
-	"name": "~TODO~",
-	"version": "0.0.1",
+	"name": "sveltekit-oidc",
+	"version": "0.0.2",
 	"scripts": {
 		"dev": "svelte-kit dev",
 		"build": "svelte-kit build",
+		"package": "svelte-kit package",
 		"preview": "svelte-kit preview",
 		"check": "svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-check --tsconfig ./tsconfig.json --watch"
 	},
 	"devDependencies": {
 		"@sveltejs/kit": "next",
+		"autoprefixer": "^10.2.6",
+		"cssnano": "^5.0.6",
+		"postcss": "^8.3.5",
+		"postcss-load-config": "^3.1.0",
 		"svelte": "^3.34.0",
 		"svelte-check": "^2.0.0",
 		"svelte-preprocess": "^4.7.3",
+		"svelte2tsx": "^0.4.5",
+		"tailwindcss": "^2.2.4",
 		"tslib": "^2.0.0",
-		"typescript": "^4.0.0",
-		"postcss": "^8.3.5",
-		"postcss-load-config": "^3.1.0",
-		"autoprefixer": "^10.2.6",
-		"cssnano": "^5.0.6",
-		"tailwindcss": "^2.2.4"
+		"typescript": "^4.3.5"
 	},
+	"license": "MIT",
+	"keywords": [
+		"auth",
+		"authentication",
+		"jwt",
+		"nodejs",
+		"oauth2",
+		"oidc",
+		"sveltekit"
+	],
+	"author": "Tushar Shukla",
+	"repository": "https://github.com/tushar10sh/sveltekit-oidc.git",
 	"type": "module",
 	"dependencies": {
-		"@xstate/svelte": "^0.1.0",
-		"cookie": "^0.4.1",
-		"xstate": "^4.23.1"
+		"cookie": "^0.4.1"
 	}
 }
