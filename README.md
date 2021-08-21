@@ -14,6 +14,88 @@ When the client side kicks in, it:
     * In case, no user is found or some error has occured on server-side, populate AuthStore with proper messages
     * Provides Login, Logout functionality
     * Initiates a front channel Authorization flow, in case of protected component via Sveletkit Load method.
+
+# Usage
+### Inside your hooks.ts
+```ts
+
+    import type { Handle, GetSession } from '@sveltejs/kit';
+    import { 
+        userDetailsGenerator,
+        getUserSession
+    } from '$lib/keycloak/utils';
+    import type { Locals } from '$lib/types';
+
+    import type { ServerRequest } from '@sveltejs/kit/types/hooks';
+
+    export const handle: Handle<Locals>  = async ({ request, resolve }) => {
+        const userGen = userDetailsGenerator(request);
+        const { value, done } = await userGen.next();
+        if ( done ) {
+            const response = value;
+            return response;
+        }
+
+        if (request.query.has('_method')) {
+            request.method = request.query.get('_method').toUpperCase();
+        }
+        // Handle resolve
+        const response = await resolve(request);
+
+        // wrap up response by over-riding headers and status
+        const extraResponse = (await userGen.next(request)).value;
+        if ( extraResponse.status ) {
+            response.status = extraResponse.status
+        }
+        response.headers = {...response.headers, ...extraResponse.headers};
+
+        return response;
+    };
+
+
+    /** @type {import('@sveltejs/kit').GetSession} */
+    export const getSession: GetSession = async (request: ServerRequest<Locals>) => {
+        const userSession = await getUserSession(request);	
+        return userSession;
+    }
+
+```
+
+### Inside your __layout.svelte component
+```html
+    <script>
+        import "../app.postcss";
+        import Keycloak from '$lib/keycloak/Keycloak.svelte';
+    </script>
+
+
+    <Keycloak
+        issuer={import.meta.env.VITE_OIDC_ISSUER}
+        client_id={import.meta.env.VITE_OIDC_CLIENT_ID}
+        scope={import.meta.env.VITE_OIDC_CLIENT_SCOPE}
+        redirect_uri={import.meta.env.VITE_OIDC_REDIRECT_URI}
+        post_logout_redirect_uri={import.meta.env.VITE_OIDC_POST_LOGOUT_REDIRECT_URI}
+        >
+        <slot></slot>
+    </Keycloak>
+```
+
+### For protected routes
+```html
+    <script lang="ts">
+        import KeycloakProtectedRoute from '$lib/keycloak/KeycloakProtectedRoute.svelte';
+        import LogoutButton from '$lib/keycloak/LogoutButton.svelte';
+    </script>
+
+    <KeycloakProtectedRoute>
+        <div class="h-screen-minus-navbar bg-gray-800 text-white flex flex-col justify-center items-center w-full">
+
+            This is a protected page
+
+            <LogoutButton>Logout</LogoutButton>
+        </div>
+    </KeycloakProtectedRoute>
+```
 # Application Screenshots
 
 ### Login / Index page 
@@ -38,10 +120,6 @@ npm run dev -- --open
 
 ## Building
 
-Before creating a production version of your app, install an [adapter](https://kit.svelte.dev/docs#adapters) for your target environment. Then:
-
 ```bash
 npm run build
 ```
-
-> You can preview the built app with `npm run preview`, regardless of whether you installed an adapter. This should _not_ be used to serve your app in production.
