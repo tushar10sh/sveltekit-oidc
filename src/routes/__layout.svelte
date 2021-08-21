@@ -1,7 +1,7 @@
 <script>
     import "../app.postcss";
     import Keycloak from '$lib/keycloak/Keycloak.svelte';
-    import Header from '$lib/shared/Header/index.svelte';
+    import Header from '$components/shared/Header/index.svelte';
 </script>
 
 
