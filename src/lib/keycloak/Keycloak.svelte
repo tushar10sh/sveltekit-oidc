@@ -101,6 +101,7 @@
 	import { browser } from '$app/env';
 	
 	import { page, session } from '$app/stores';
+
     // props.
 	export let issuer: string;
 	export let client_id: string;

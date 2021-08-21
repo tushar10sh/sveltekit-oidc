@@ -1,3 +1,5 @@
+import type { MaybePromise } from "@sveltejs/kit/types/helper";
+
 export type AuthError = {
     error: string;
     error_description: string;
@@ -31,3 +33,18 @@ export interface OIDCFailureResponse extends AuthError {
 }
 
 export type OIDCResponse = OIDCSuccessResponse & OIDCFailureResponse;
+
+export interface UserDetailsGeneratorFn {
+	(request: ServerRequest<Locals>): AsyncGenerator<ServerResponse, ServerResponse, ServerRequest<Locals>>
+}
+export interface UserSession { 
+	user: any;
+	access_token: string;
+	refresh_token: string;
+	userid: string;
+    error?: AuthError | undefined;
+	auth_server_online: boolean;
+}
+export interface GetUserSessionFn {
+    (request: ServerRequest<Locals>): Promise<UserSession>
+}

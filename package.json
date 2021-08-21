@@ -23,7 +23,8 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@xstate/svelte": "^0.1.0",
 		"cookie": "^0.4.1",
-		"oidc-client": "^1.11.5"
+		"xstate": "^4.23.1"
 	}
 }
