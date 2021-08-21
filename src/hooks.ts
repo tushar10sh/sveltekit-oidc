@@ -3,8 +3,11 @@ import {
 	userDetailsGenerator,
 	getUserSession
 } from '$lib/keycloak/utils';
+import type { Locals } from '$lib/types';
 
-export const handle: Handle = async ({ request, resolve }) => {
+import type { ServerRequest } from '@sveltejs/kit/types/hooks';
+
+export const handle: Handle<Locals>  = async ({ request, resolve }) => {
 	const userGen = userDetailsGenerator(request);
 	const { value, done } = await userGen.next();
 	if ( done ) {
@@ -30,7 +33,7 @@ export const handle: Handle = async ({ request, resolve }) => {
 
 
 /** @type {import('@sveltejs/kit').GetSession} */
-export const getSession: GetSession = async (request) => {
+export const getSession: GetSession = async (request: ServerRequest<Locals>) => {
 	const userSession = await getUserSession(request);	
 	return userSession;
 }
