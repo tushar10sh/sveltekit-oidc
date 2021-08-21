@@ -16,6 +16,19 @@ When the client side kicks in, it:
     * Initiates a front channel Authorization flow, in case of protected component via Sveletkit Load method.
 
 # Usage
+
+## Configuration
+Create an .env file in project root with following content
+
+```ts
+    VITE_OIDC_ISSUER="http://localhost:28080/auth/realms/hasura"
+    VITE_OIDC_CLIENT_ID="hasura-app"
+    VITE_OIDC_CLIENT_SECRET="1439e34f-343e-4f71-bbc7-cc602dced84a"
+    VITE_OIDC_REDIRECT_URI="http://localhost:3000"
+    VITE_OIDC_POST_LOGOUT_REDIRECT_URI="http://localhost:3000"
+    VITE_OIDC_CLIENT_SCOPE="openid profile email hasura-claims"
+    VITE_OIDC_TOKEN_REFRESH_MAX_RETRIES="5"
+```
 ### Inside your hooks.ts
 ```ts
 
