@@ -21,7 +21,7 @@ export const handle: Handle<Locals>  = async ({ request, resolve }) => {
 	// Handle resolve
 	const response = await resolve(request);
 
-	// wrap up response 
+	// wrap up response by over-riding headers and status
 	const extraResponse = (await userGen.next(request)).value;
 	if ( extraResponse.status ) {
 		response.status = extraResponse.status
