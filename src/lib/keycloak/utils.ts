@@ -341,7 +341,7 @@ export const userDetailsGenerator: UserDetailsGeneratorFn = async function* (req
 	const tokenExpired = isTokenExpired(request.locals.access_token);
 	const beforeAccessToken = request.locals.access_token;
 
-    request = yield;
+    request = {...request, ...yield};
 	
     let response: ServerResponse = {status: 200, headers: {}};
 	const afterAccessToken = request.locals.access_token;

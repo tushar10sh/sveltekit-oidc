@@ -2,6 +2,9 @@
     import { isAuthenticated, isLoading, authError, accessToken } from '$lib/keycloak/AuthStore';
     import LoginButton from '$lib/keycloak/LoginButton.svelte';
     import LogoutButton from '$lib/keycloak/LogoutButton.svelte';
+
+    import KeycloakProtectedRoute from '$lib/keycloak/KeycloakProtectedRoute.svelte';
+
     let access_token_elem;
     // let access_token_copy_btn;
     let is_access_token_copied = false;

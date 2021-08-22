@@ -1,4 +1,5 @@
 import type { MaybePromise } from "@sveltejs/kit/types/helper";
+import type { ServerRequest, ServerResponse } from '@sveltejs/kit/types/hooks';
 
 export type AuthError = {
     error: string;

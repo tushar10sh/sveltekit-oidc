@@ -30,7 +30,7 @@ Create an .env file in project root with following content
     VITE_OIDC_TOKEN_REFRESH_MAX_RETRIES="5"
 ```
 
-### Inside your global.d.ts
+### Inside your src/global.d.ts
 
 ```ts
 interface ImportMetaEnv {
@@ -44,19 +44,21 @@ interface ImportMetaEnv {
 }
 ```
 
-### Inside your hooks.ts
+### Inside your src/hooks.ts
 ```ts
 
     import type { Handle, GetSession } from '@sveltejs/kit';
     import { 
         userDetailsGenerator,
         getUserSession
-    } from '$lib/keycloak/utils';
+    } from 'sveltekit-oidc/keycloak/utils';
     import type { Locals } from '$lib/types';
 
     import type { ServerRequest } from '@sveltejs/kit/types/hooks';
 
     export const handle: Handle<Locals>  = async ({ request, resolve }) => {
+
+        // Initialization part
         const userGen = userDetailsGenerator(request);
         const { value, done } = await userGen.next();
         if ( done ) {
@@ -64,19 +66,26 @@ interface ImportMetaEnv {
             return response;
         }
 
+        // Your code here -----
         if (request.query.has('_method')) {
             request.method = request.query.get('_method').toUpperCase();
         }
         // Handle resolve
         const response = await resolve(request);
 
+
+        // After your code ends, Populate response headers with Auth Info
         // wrap up response by over-riding headers and status
         const extraResponse = (await userGen.next(request)).value;
-        if ( extraResponse.status ) {
+        const { Location, ...restHeaders } = extraResponse.headers;
+        // SSR Redirection
+        if ( extraResponse.status === 302 && Location ) {
             response.status = extraResponse.status
+            response.headers['Location'] = Location;
         }
-        response.headers = {...response.headers, ...extraResponse.headers};
+        response.headers = {...response.headers, ...restHeaders};
 
+        // Return response back
         return response;
     };
 
@@ -89,11 +98,10 @@ interface ImportMetaEnv {
 
 ```
 
-### Inside your __layout.svelte component
+### Inside your src/routes/__layout.svelte component
 ```html
-    <script>
-        import "../app.postcss";
-        import Keycloak from '$lib/keycloak/Keycloak.svelte';
+    <script lang="ts">
+        import Keycloak from 'sveltekit-oidc/keycloak/Keycloak.svelte';
     </script>
 
 
@@ -111,8 +119,8 @@ interface ImportMetaEnv {
 ### For protected routes
 ```html
     <script lang="ts">
-        import KeycloakProtectedRoute from '$lib/keycloak/KeycloakProtectedRoute.svelte';
-        import LogoutButton from '$lib/keycloak/LogoutButton.svelte';
+        import KeycloakProtectedRoute from 'sveltekit-oidc/keycloak/KeycloakProtectedRoute.svelte';
+        import LogoutButton from 'sveltekit-oidc/keycloak/LogoutButton.svelte';
     </script>
 
     <KeycloakProtectedRoute>

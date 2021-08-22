@@ -8,6 +8,7 @@ import type { Locals } from '$lib/types';
 import type { ServerRequest } from '@sveltejs/kit/types/hooks';
 
 export const handle: Handle<Locals>  = async ({ request, resolve }) => {
+	// Initialization part
 	const userGen = userDetailsGenerator(request);
 	const { value, done } = await userGen.next();
 	if ( done ) {
@@ -15,19 +16,26 @@ export const handle: Handle<Locals>  = async ({ request, resolve }) => {
 		return response;
 	}
 
+	// Your code here -----------
 	if (request.query.has('_method')) {
 		request.method = request.query.get('_method').toUpperCase();
 	}
 	// Handle resolve
 	const response = await resolve(request);
 
+
+	// After your code ends, Populate response headers with Auth Info
 	// wrap up response by over-riding headers and status
 	const extraResponse = (await userGen.next(request)).value;
-	if ( extraResponse.status ) {
+	const { Location, ...restHeaders } = extraResponse.headers;
+	// SSR Redirection
+	if ( extraResponse.status === 302 && Location ) {
 		response.status = extraResponse.status
+		response.headers['Location'] = Location;
 	}
-	response.headers = {...response.headers, ...extraResponse.headers};
+	response.headers = {...response.headers, ...restHeaders};
 
+	// Return response back
 	return response;
 };
 
