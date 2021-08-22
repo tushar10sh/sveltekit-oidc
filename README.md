@@ -15,8 +15,16 @@ When the client side kicks in, it:
     * Provides Login, Logout functionality
     * Initiates a front channel Authorization flow, in case of protected component via Sveletkit Load method.
 
+### Npm Package link
+    https://www.npmjs.com/package/sveltekit-oidc
 # Usage
 
+<code>
+    npm i sveltekit-oidc
+</code>
+
+
+##
 ## Configuration
 Create an .env file in project root with following content
 
