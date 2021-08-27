@@ -1,3 +1,7 @@
+<script context="module">
+    export const ssr = true;
+</script>
+
 <script lang="ts">
     import { isAuthenticated, isLoading, authError, accessToken } from '$lib/keycloak/AuthStore';
     import LoginButton from '$lib/keycloak/LoginButton.svelte';

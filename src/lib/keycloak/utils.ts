@@ -3,9 +3,9 @@ import type { Locals, OIDCFailureResponse, OIDCResponse, UserDetailsGeneratorFn,
 import cookie from 'cookie';
 import type { ServerRequest, ServerResponse } from '@sveltejs/kit/types/hooks';
 
-const oidcBaseUrl = `${import.meta.env.VITE_OIDC_ISSUER}/protocol/openid-connect`;
-const clientId = import.meta.env.VITE_OIDC_CLIENT_ID;
-const clientSecret = import.meta.env.VITE_OIDC_CLIENT_SECRET;
+export const oidcBaseUrl = `${import.meta.env.VITE_OIDC_ISSUER}/protocol/openid-connect`;
+export const clientId = import.meta.env.VITE_OIDC_CLIENT_ID;
+
 let appRedirectUrl = import.meta.env.VITE_OIDC_REDIRECT_URI;
 
 export function isTokenExpired(jwt: string): boolean {
@@ -149,7 +149,7 @@ export async function renewOIDCToken(refresh_token: string, oidcBaseUrl: string,
         const newToken = await res.json()
         const data: OIDCResponse = {
             ...newToken,
-            refresh_token: refresh_token
+			refresh_token: isTokenExpired(refresh_token) ? newToken.refresh_token : refresh_token
         };
         return data;
     } else {
@@ -243,9 +243,8 @@ export const injectCookies = (request, response) => {
 		userid: `${request.locals.userid}`,
 		user: `${serialized_user}`
 	};
-	responseCookies['access_token'] = `${request.locals.access_token}`;
 	responseCookies['refresh_token'] = `${request.locals.refresh_token}`;
-	response.headers['set-cookie'] = `userInfo=${JSON.stringify(responseCookies)}; Path=/; HttpOnly;`
+	response.headers['set-cookie'] = `userInfo=${JSON.stringify(responseCookies)}; Path=/; HttpOnly; SameSite=Lax;`
 	return response;
 }
 
@@ -277,15 +276,17 @@ const isAuthInfoInvalid = (obj) => {
 	return (!obj?.userid || !obj?.access_token || !obj?.refresh_token || !obj?.user );
 }
 
-export const userDetailsGenerator: UserDetailsGeneratorFn = async function* (request: ServerRequest<Locals>) {
+export const userDetailsGenerator: UserDetailsGeneratorFn = async function* (request: ServerRequest<Locals>, clientSecret: string) {
     console.log('Request path:', request.path);
-	const cookies = cookie.parse(request.headers.cookie || '');
+	const cookies = request.headers.cookie ? cookie.parse(request.headers.cookie || '') : null;
+	console.log(cookies);
 	const userInfo = cookies?.userInfo ? JSON.parse(cookies.userInfo) : {};
     request.locals.retries = 0;
 	request.locals.authError = {
 		error: null,
 		error_description: null
 	};
+
 
 	populateRequestLocals(request, 'userid', userInfo, '');
 	populateRequestLocals(request, 'access_token', userInfo, null);
@@ -364,7 +365,7 @@ export const userDetailsGenerator: UserDetailsGeneratorFn = async function* (req
 
 
 
-export const getUserSession: GetUserSessionFn = async (request: ServerRequest<Locals>) => {
+export const getUserSession: GetUserSessionFn = async (request: ServerRequest<Locals>, clientSecret) => {
     try {
 		if ( request.locals?.access_token ) {
 			if ( request.locals.user && request.locals.userid && !isTokenExpired(request.locals.access_token) ) {
@@ -412,7 +413,7 @@ export const getUserSession: GetUserSessionFn = async (request: ServerRequest<Lo
 			});
 			if ( res.ok ) {
 				const data = await res.json();
-                console.log('userinfo fetched');
+                // console.log('userinfo fetched');
 				request.locals.userid = data.sub;
 				request.locals.user = {...data};
 				return {
@@ -430,7 +431,7 @@ export const getUserSession: GetUserSessionFn = async (request: ServerRequest<Lo
 			} else {
 				try {
                 	const data = await res.json();
-					console.log(data, import.meta.env.VITE_OIDC_TOKEN_REFRESH_MAX_RETRIES);
+					// console.log(data, import.meta.env.VITE_OIDC_TOKEN_REFRESH_MAX_RETRIES);
 					if ( data?.error && request.locals?.retries < import.meta.env.VITE_OIDC_TOKEN_REFRESH_MAX_RETRIES) {
 						console.log('old token expiry', isTokenExpired(request.locals.access_token));
 						const newTokenData = await renewOIDCToken(request.locals.refresh_token, oidcBaseUrl, clientId, clientSecret);
@@ -443,7 +444,7 @@ export const getUserSession: GetUserSessionFn = async (request: ServerRequest<Lo
 						} else {
 							request.locals.access_token = newTokenData.access_token;
 							request.locals.retries = request.locals.retries + 1;
-							return await getUserSession(request);
+							return await getUserSession(request, clientSecret);
 						}
 					}
 					
@@ -452,16 +453,34 @@ export const getUserSession: GetUserSessionFn = async (request: ServerRequest<Lo
 						error_description: data?.error_description ? data.error_description :"Unable to retrieve user Info"
 					}
 				} catch (e) {
-					console.error(e);
+					// console.error('Error while refreshing access_token; access_token is invalid', e);
 					throw {
 						...e
 					}
 				}
-                
-                
             }
 		} else {
-			console.error('getSession request.locals.access_token ', request.locals.access_token);
+			// console.error('getSession request.locals.access_token ', request.locals.access_token);
+			try {
+				if ( request.locals?.retries < import.meta.env.VITE_OIDC_TOKEN_REFRESH_MAX_RETRIES) {
+					console.log('old token expiry', isTokenExpired(request.locals.access_token));
+					const newTokenData = await renewOIDCToken(request.locals.refresh_token, oidcBaseUrl, clientId, clientSecret);
+					// console.log(newTokenData);
+					if ( newTokenData?.error ) {
+						throw {
+							error: newTokenData.error,
+							error_description: newTokenData.error_description
+						}
+					} else {
+						request.locals.access_token = newTokenData.access_token;
+						request.locals.retries = request.locals.retries + 1;
+						return await getUserSession(request, clientSecret);
+					}
+				}
+				
+			} catch (e) {
+				console.error('Error while refreshing access_token; access_token is missing', e);
+			}
 			try {
 				const testAuthServerResponse = await fetch(import.meta.env.VITE_OIDC_ISSUER,{
 					headers: {

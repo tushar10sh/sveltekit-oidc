@@ -36,7 +36,7 @@ export interface OIDCFailureResponse extends AuthError {
 export type OIDCResponse = OIDCSuccessResponse & OIDCFailureResponse;
 
 export interface UserDetailsGeneratorFn {
-	(request: ServerRequest<Locals>): AsyncGenerator<ServerResponse, ServerResponse, ServerRequest<Locals>>
+	(request: ServerRequest<Locals>, clientSecret: string): AsyncGenerator<ServerResponse, ServerResponse, ServerRequest<Locals>>
 }
 export interface UserSession { 
 	user: any;
@@ -47,5 +47,5 @@ export interface UserSession {
 	auth_server_online: boolean;
 }
 export interface GetUserSessionFn {
-    (request: ServerRequest<Locals>): Promise<UserSession>
+    (request: ServerRequest<Locals>, clientSecret: string): Promise<UserSession>
 }

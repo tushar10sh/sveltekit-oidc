@@ -3,13 +3,15 @@ import {
 	userDetailsGenerator,
 	getUserSession
 } from '$lib/keycloak/utils';
+import { clientSecret } from './routes/auth/_secret';
+
 import type { Locals } from '$lib/types';
 
 import type { ServerRequest } from '@sveltejs/kit/types/hooks';
 
 export const handle: Handle<Locals>  = async ({ request, resolve }) => {
 	// Initialization part
-	const userGen = userDetailsGenerator(request);
+	const userGen = userDetailsGenerator(request, clientSecret);
 	const { value, done } = await userGen.next();
 	if ( done ) {
 		const response = value;
@@ -42,6 +44,7 @@ export const handle: Handle<Locals>  = async ({ request, resolve }) => {
 
 /** @type {import('@sveltejs/kit').GetSession} */
 export const getSession: GetSession = async (request: ServerRequest<Locals>) => {
-	const userSession = await getUserSession(request);	
+	const userSession = await getUserSession(request, clientSecret);	
+	// console.log(userSession);
 	return userSession;
 }
