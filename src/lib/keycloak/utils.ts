@@ -199,7 +199,7 @@ export async function introspectOIDCToken(access_token: string, oidcBaseUrl: str
 }
 
 
-export const populateRequestLocals = (request, keyName, userInfo, defaultValue) => {
+export const populateRequestLocals = (request: ServerRequest<Locals>, keyName: string, userInfo, defaultValue) => {
 	if ( request.headers[keyName] ) {
 		request.locals[keyName] = request.headers[keyName];
 	} else {
@@ -212,7 +212,7 @@ export const populateRequestLocals = (request, keyName, userInfo, defaultValue) 
 	return request;
 }
 
-export const populateResponseHeaders = (request, response) => {
+export const populateResponseHeaders = (request: ServerRequest<Locals>, response: ServerResponse) => {
 	if ( request.locals.user ) {
 		response.headers['user'] = `${JSON.stringify(request.locals.user)}`;
 	}
@@ -230,7 +230,7 @@ export const populateResponseHeaders = (request, response) => {
 	return response;
 }
 
-export const injectCookies = (request, response) => {
+export const injectCookies = (request: ServerRequest<Locals>, response: ServerResponse) => {
 	let responseCookies = {};
 	let serialized_user = null;
 
@@ -244,11 +244,15 @@ export const injectCookies = (request, response) => {
 		user: `${serialized_user}`
 	};
 	responseCookies['refresh_token'] = `${request.locals.refresh_token}`;
-	response.headers['set-cookie'] = `userInfo=${JSON.stringify(responseCookies)}; Path=/; HttpOnly; SameSite=Lax;`
+	let cookieAtrributes = 'Path=/; HttpOnly; SameSite=Lax;';
+	if ( request.locals?.cookieAttributes ) {
+		cookieAtrributes = request.locals.cookieAttributes;
+	}
+	response.headers['set-cookie'] = `userInfo=${JSON.stringify(responseCookies)}; ${cookieAtrributes}`;
 	return response;
 }
 
-export const parseUser = (request, userInfo) => {
+export const parseUser = (request: ServerRequest<Locals>, userInfo) => {
     let userJsonParseFailed = false;
     try {
 		if ( request.headers?.user ) {
@@ -279,7 +283,7 @@ const isAuthInfoInvalid = (obj) => {
 export const userDetailsGenerator: UserDetailsGeneratorFn = async function* (request: ServerRequest<Locals>, clientSecret: string) {
     console.log('Request path:', request.path);
 	const cookies = request.headers.cookie ? cookie.parse(request.headers.cookie || '') : null;
-	console.log(cookies);
+	// console.log(cookies);
 	const userInfo = cookies?.userInfo ? JSON.parse(cookies.userInfo) : {};
     request.locals.retries = 0;
 	request.locals.authError = {
@@ -306,7 +310,7 @@ export const userDetailsGenerator: UserDetailsGeneratorFn = async function* (req
 		};
 		request.locals.user = null;
 		ssr_redirect_uri = request.path;
-		let response =  {
+		let response: ServerResponse =  {
 			status: 302,
 			headers: {
 				'Location': ssr_redirect_uri

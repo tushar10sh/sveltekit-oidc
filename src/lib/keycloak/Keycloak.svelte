@@ -7,7 +7,7 @@
 	export const OIDC_CONTEXT_CLIENT_PROMISE = {};
 	export const OIDC_CONTEXT_REDIRECT_URI: string = ''; 
 	export const OIDC_CONTEXT_POST_LOGOUT_REDIRECT_URI: string = '';
-	
+
 	export async function login(oidcPromise: OidcContextClientPromise) {
 		try {
 			const oidc_func = await oidcPromise;
@@ -105,12 +105,15 @@
 	
 	import { page, session } from '$app/stores';
 
+
     // props.
 	export let issuer: string;
 	export let client_id: string;
 	export let redirect_uri: string;
 	export let post_logout_redirect_uri: string;
     export let scope:string;
+	export let refresh_token_endpoint: string;
+	
 	const oidcBaseUrl = `${issuer}/protocol/openid-connect`;
 
 	const oidc_func: OidcContextClientFn = (request_path?: string, request_params?: Record<string, string>) => {
@@ -130,7 +133,7 @@
 	let tokenTimeoutObj = null;
 	export async function silentRefresh(oldRefreshToken: string) {
 		const reqBody = `refresh_token=${oldRefreshToken}`;
-		const res = await fetch('/auth/refresh_token', {
+		const res = await fetch(refresh_token_endpoint, {
 			method: 'POST',
 			headers: {
    	        	'Content-Type': 'application/x-www-form-urlencoded'
@@ -144,7 +147,7 @@
 				AuthStore.accessToken.set(access_token);
 				AuthStore.refreshToken.set(refresh_token);
 				const jwtData = JSON.parse(atob(access_token.split('.')[1]).toString());
-				const tokenSkew = 50; // 10 seconds before actual token expiry
+				const tokenSkew = 10; // 10 seconds before actual token expiry
 				const timeoutDuration =  ( jwtData.exp*1000 - tokenSkew*1000 - new Date().getTime() );
 				if ( tokenTimeoutObj ) {
 					clearTimeout(tokenTimeoutObj);
@@ -178,9 +181,6 @@
 		if ( browser ) {
 			if ( event.key === 'user_logout') {
 				try {
-					// console.log(event);
-					// console.log(window.localStorage.getItem('user_logout'));
-					// console.log(window.localStorage.getItem('user_login'));
 					if ( JSON.parse(window.localStorage.getItem('user_logout')) ) {
 						window.localStorage.setItem('user_login', null);
 						window.location.assign($page.path);
@@ -194,9 +194,6 @@
 		if ( browser ) {
 			if ( event.key === 'user_login') {
 				try {
-					// console.log(event);
-					// console.log(window.localStorage.getItem('user_logout'));
-					// console.log(window.localStorage.getItem('user_login'));
 					window.localStorage.setItem('user_logout', "false");
 					const userInfo = JSON.parse(window.localStorage.getItem('user_login'));
 					if ( userInfo && (!$session.user || $session.user.preferred_username !== userInfo.preferred_username) ) {
@@ -243,7 +240,7 @@
 					AuthStore.accessToken.set($session.access_token);
 					AuthStore.refreshToken.set($session.refresh_token);
 					const jwtData = JSON.parse(atob($session.access_token.split('.')[1]).toString());
-					const tokenSkew = 50; // 10 seconds before actual token expiry
+					const tokenSkew = 10; // 10 seconds before actual token expiry
 					const timeoutDuration =  ( jwtData.exp*1000 - tokenSkew*1000 - new Date().getTime() );
 					tokenTimeoutObj = setTimeout( async () => {
 						await silentRefresh($session.refresh_token);

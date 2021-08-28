@@ -3,11 +3,12 @@ import {
 	userDetailsGenerator,
 	getUserSession
 } from '$lib/keycloak/utils';
-import { clientSecret } from './routes/auth/_secret';
 
 import type { Locals } from '$lib/types';
 
 import type { ServerRequest } from '@sveltejs/kit/types/hooks';
+
+const clientSecret = process.env.VITE_OIDC_CLIENT_SECRET || import.meta.env.VITE_OIDC_CLIENT_SECRET;
 
 export const handle: Handle<Locals>  = async ({ request, resolve }) => {
 	// Initialization part
@@ -17,6 +18,9 @@ export const handle: Handle<Locals>  = async ({ request, resolve }) => {
 		const response = value;
 		return response;
 	}
+	
+	// Set Cookie attributes
+	request.locals.cookieAttributes = 'Path=/; HttpOnly; SameSite=Strict;';
 
 	// Your code here -----------
 	if (request.query.has('_method')) {

@@ -3,11 +3,12 @@ import {
     oidcBaseUrl,
     clientId
 } from '$lib/keycloak/utils';
-import { clientSecret } from './_secret';
 
 import type { Locals } from '$lib/types';
 import type { RequestHandler } from '@sveltejs/kit';
 
+
+const clientSecret = process.env.VITE_OIDC_CLIENT_SECRET || import.meta.env.VITE_OIDC_CLIENT_SECRET;
 /**
  * @type {import('@sveltejs/kit').RequestHandler}
  */

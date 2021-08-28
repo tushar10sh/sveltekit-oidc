@@ -12,6 +12,7 @@ export interface Locals {
     authError?: AuthError;
 	user?: any;
     retries?: number;
+	cookieAttributes?: string;
 }
 
 export type OidcContextClientFn = (request_path?: string, request_params?: Record<string, string>) => {
