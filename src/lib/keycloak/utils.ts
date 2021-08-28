@@ -4,7 +4,7 @@ import cookie from 'cookie';
 import type { ServerRequest, ServerResponse } from '@sveltejs/kit/types/hooks';
 
 export const oidcBaseUrl = `${import.meta.env.VITE_OIDC_ISSUER}/protocol/openid-connect`;
-export const clientId = import.meta.env.VITE_OIDC_CLIENT_ID;
+export const clientId = `${import.meta.env.VITE_OIDC_CLIENT_ID}`;
 
 let appRedirectUrl = import.meta.env.VITE_OIDC_REDIRECT_URI;
 
