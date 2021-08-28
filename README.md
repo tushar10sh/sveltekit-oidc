@@ -96,7 +96,7 @@ import {
     userDetailsGenerator,
     getUserSession
 } from 'sveltekit-oidc/keycloak/utils';
-import type { Locals } from '$lib/types';
+import type { Locals } from 'sveltekit-oidc/types';
 
 import type { ServerRequest } from '@sveltejs/kit/types/hooks';
 
