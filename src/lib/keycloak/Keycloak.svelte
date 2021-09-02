@@ -148,13 +148,19 @@
 				AuthStore.refreshToken.set(refresh_token);
 				const jwtData = JSON.parse(atob(access_token.split('.')[1]).toString());
 				const tokenSkew = 10; // 10 seconds before actual token expiry
-				const timeoutDuration =  ( jwtData.exp*1000 - tokenSkew*1000 - new Date().getTime() );
+				const skewedTimeoutDuration =  ( jwtData.exp*1000 - tokenSkew*1000 - new Date().getTime() ) ;
+				const timeoutDuration = skewedTimeoutDuration > 0 ? skewedTimeoutDuration : skewedTimeoutDuration + tokenSkew*1000 ;
 				if ( tokenTimeoutObj ) {
 					clearTimeout(tokenTimeoutObj);
 				}
-				tokenTimeoutObj = setTimeout( async () => {
-					await silentRefresh(refresh_token);
-				}, timeoutDuration);
+				console.log(timeoutDuration);
+				if ( timeoutDuration > 0 ) {
+					tokenTimeoutObj = setTimeout( async () => {
+						await silentRefresh(refresh_token);
+					}, timeoutDuration);
+				} else {
+					window.location.assign($page.path);
+				}
 			} else {
 				if ( tokenTimeoutObj ) {
 					clearTimeout(tokenTimeoutObj);
@@ -241,10 +247,14 @@
 					AuthStore.refreshToken.set($session.refresh_token);
 					const jwtData = JSON.parse(atob($session.access_token.split('.')[1]).toString());
 					const tokenSkew = 10; // 10 seconds before actual token expiry
-					const timeoutDuration =  ( jwtData.exp*1000 - tokenSkew*1000 - new Date().getTime() );
-					tokenTimeoutObj = setTimeout( async () => {
-						await silentRefresh($session.refresh_token);
-					}, timeoutDuration);
+					const skewedTimeoutDuration =  ( jwtData.exp*1000 - tokenSkew*1000 - new Date().getTime() ) ;
+					const timeoutDuration = skewedTimeoutDuration > 0 ? skewedTimeoutDuration : skewedTimeoutDuration + tokenSkew*1000 ;
+					console.log(timeoutDuration);
+					if ( timeoutDuration > 0 ) {
+						tokenTimeoutObj = setTimeout( async () => {
+							await silentRefresh($session.refresh_token);
+						}, timeoutDuration);
+					}
 					AuthStore.authError.set(null);
 					if ( window.location.toString().includes('code=') ) {
 						window.location.assign($page.path);
