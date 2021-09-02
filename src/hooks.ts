@@ -20,7 +20,7 @@ export const handle: Handle<Locals>  = async ({ request, resolve }) => {
 	}
 	
 	// Set Cookie attributes
-	request.locals.cookieAttributes = 'Path=/; HttpOnly; SameSite=Strict;';
+	request.locals.cookieAttributes = 'Path=/; HttpOnly; SameSite=Lax;';
 
 	// Your code here -----------
 	if (request.query.has('_method')) {
@@ -32,16 +32,17 @@ export const handle: Handle<Locals>  = async ({ request, resolve }) => {
 
 	// After your code ends, Populate response headers with Auth Info
 	// wrap up response by over-riding headers and status
-	const extraResponse = (await userGen.next(request)).value;
-	const { Location, ...restHeaders } = extraResponse.headers;
-	// SSR Redirection
-	if ( extraResponse.status === 302 && Location ) {
-		response.status = extraResponse.status
-		response.headers['Location'] = Location;
-	}
-	response.headers = {...response.headers, ...restHeaders};
+	if ( response?.status !== 404 ) {
+		const extraResponse = (await userGen.next(request)).value;
+		const { Location, ...restHeaders } = extraResponse.headers;
+		// SSR Redirection
+		if ( extraResponse.status === 302 && Location ) {
+			response.status = extraResponse.status
+			response.headers['Location'] = Location;
+		}
+		response.headers = {...response.headers, ...restHeaders};
 
-	// Return response back
+	}
 	return response;
 };
 
@@ -49,6 +50,5 @@ export const handle: Handle<Locals>  = async ({ request, resolve }) => {
 /** @type {import('@sveltejs/kit').GetSession} */
 export const getSession: GetSession = async (request: ServerRequest<Locals>) => {
 	const userSession = await getUserSession(request, clientSecret);	
-	// console.log(userSession);
 	return userSession;
 }

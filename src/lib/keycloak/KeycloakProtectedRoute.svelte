@@ -6,8 +6,10 @@
     import { OIDC_CONTEXT_CLIENT_PROMISE } from './Keycloak.svelte';
     import type { OidcContextClientPromise } from '$lib/types';
     import { isTokenExpired } from './utils';
+    
+    let isAuthenticated = false;
+
     const loadUser = async () => {
-        let isAuthenticated = false;
         if ( browser ) {
             const oidcPromise: OidcContextClientPromise = getContext(OIDC_CONTEXT_CLIENT_PROMISE);
             const oidc_func = await oidcPromise;
@@ -25,10 +27,7 @@
                 isAuthenticated = true;
             }
         }
-        return isAuthenticated;
 	}
-    $: isAuthenticated = browser ? isTokenExpired($session.access_token) : false;
-
 </script>
 
 {#await loadUser()}

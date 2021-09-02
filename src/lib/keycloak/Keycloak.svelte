@@ -132,55 +132,64 @@
 
 	let tokenTimeoutObj = null;
 	export async function silentRefresh(oldRefreshToken: string) {
-		const reqBody = `refresh_token=${oldRefreshToken}`;
-		const res = await fetch(refresh_token_endpoint, {
-			method: 'POST',
-			headers: {
-   	        	'Content-Type': 'application/x-www-form-urlencoded'
-        	},
-			body: reqBody
-		})
-		if ( res.ok ) {
-			const resData = await res.json();
-			if ( !resData.error ) {
-				const { access_token, refresh_token } = resData;
-				AuthStore.accessToken.set(access_token);
-				AuthStore.refreshToken.set(refresh_token);
-				const jwtData = JSON.parse(atob(access_token.split('.')[1]).toString());
-				const tokenSkew = 10; // 10 seconds before actual token expiry
-				const skewedTimeoutDuration =  ( jwtData.exp*1000 - tokenSkew*1000 - new Date().getTime() ) ;
-				const timeoutDuration = skewedTimeoutDuration > 0 ? skewedTimeoutDuration : skewedTimeoutDuration + tokenSkew*1000 ;
-				if ( tokenTimeoutObj ) {
-					clearTimeout(tokenTimeoutObj);
-				}
-				console.log(timeoutDuration);
-				if ( timeoutDuration > 0 ) {
-					tokenTimeoutObj = setTimeout( async () => {
-						await silentRefresh(refresh_token);
-					}, timeoutDuration);
+		try {
+			const reqBody = `refresh_token=${oldRefreshToken}`;
+			const res = await fetch(refresh_token_endpoint, {
+				method: 'POST',
+				headers: {
+  	 	        	'Content-Type': 'application/x-www-form-urlencoded'
+  	      	},
+				body: reqBody
+			})
+			if ( res.ok ) {
+				const resData = await res.json();
+				if ( !resData.error ) {
+					const { access_token, refresh_token } = resData;
+					AuthStore.accessToken.set(access_token);
+					AuthStore.refreshToken.set(refresh_token);
+					const jwtData = JSON.parse(atob(access_token.split('.')[1]).toString());
+					const tokenSkew = 10; // 10 seconds before actual token expiry
+					const skewedTimeoutDuration =  ( jwtData.exp*1000 - tokenSkew*1000 - new Date().getTime() ) ;
+					const timeoutDuration = skewedTimeoutDuration > 0 ? skewedTimeoutDuration : skewedTimeoutDuration + tokenSkew*1000 ;
+					if ( tokenTimeoutObj ) {
+						clearTimeout(tokenTimeoutObj);
+					}
+					if ( timeoutDuration > 0 ) {
+						tokenTimeoutObj = setTimeout( async () => {
+							await silentRefresh(refresh_token);
+						}, timeoutDuration);
+					} else {
+						throw({
+							error: 'invalid_grant',
+							error_description: 'Session not active'
+						});
+					}
 				} else {
-					window.location.assign($page.path);
+					throw({
+						error: resData.error,
+						error_description: resData.error_description
+					})
 				}
 			} else {
-				if ( tokenTimeoutObj ) {
-					clearTimeout(tokenTimeoutObj);
-				}
-				AuthStore.accessToken.set(null);
-				AuthStore.refreshToken.set(null);
-				AuthStore.isAuthenticated.set(false);
-				AuthStore.authError.set({
-					error: resData.error,
-					error_description: resData.error_description
-				});
+				throw({
+					error: 'token_refresh_error',
+					error_description: 'Unable to Refresh token'
+				})
 			}
-		} else {
+		} catch(e) {
+			if ( tokenTimeoutObj ) {
+				clearTimeout(tokenTimeoutObj);
+			}
 			AuthStore.accessToken.set(null);
 			AuthStore.refreshToken.set(null);
 			AuthStore.isAuthenticated.set(false);
 			AuthStore.authError.set({
-				error: 'token_refresh_error',
-				error_description: 'Unable to Refresh token'
+				error: e?.error,
+				error_description: e?.error_description
 			});
+			if ( import.meta.env?.VITE_REFRESH_PAGE_ON_SESSION_TIMEOUT ) {
+				window.location.assign($page.path);
+			}
 		}
 	}
 	const syncLogout = (event: StorageEvent) => {
@@ -189,7 +198,17 @@
 				try {
 					if ( JSON.parse(window.localStorage.getItem('user_logout')) ) {
 						window.localStorage.setItem('user_login', null);
-						window.location.assign($page.path);
+						
+						AuthStore.accessToken.set(null);
+						AuthStore.refreshToken.set(null);
+						AuthStore.isAuthenticated.set(false);
+						AuthStore.authError.set({
+							error: 'invalid_grant',
+							error_description: 'Session is not active'
+						});
+						if ( import.meta.env?.VITE_REFRESH_PAGE_ON_SESSION_TIMEOUT ) {
+							window.location.assign($page.path);
+						} 
 					}
 				} catch(e) {}
 			}
@@ -202,8 +221,8 @@
 				try {
 					window.localStorage.setItem('user_logout', "false");
 					const userInfo = JSON.parse(window.localStorage.getItem('user_login'));
-					if ( userInfo && (!$session.user || $session.user.preferred_username !== userInfo.preferred_username) ) {
-						const answer = confirm(`Welcome ${userInfo.preferred_username}. Refresh page!`)
+					if ( userInfo && (!$session.user || $session.user?.preferred_username !== userInfo?.preferred_username) ) {
+						const answer = confirm(`Welcome ${userInfo?.preferred_username || 'user' }. Refresh page!`)
 						if ( answer ) {
 							window.location.assign($page.path);
 						}
@@ -249,12 +268,9 @@
 					const tokenSkew = 10; // 10 seconds before actual token expiry
 					const skewedTimeoutDuration =  ( jwtData.exp*1000 - tokenSkew*1000 - new Date().getTime() ) ;
 					const timeoutDuration = skewedTimeoutDuration > 0 ? skewedTimeoutDuration : skewedTimeoutDuration + tokenSkew*1000 ;
-					console.log(timeoutDuration);
-					if ( timeoutDuration > 0 ) {
-						tokenTimeoutObj = setTimeout( async () => {
-							await silentRefresh($session.refresh_token);
-						}, timeoutDuration);
-					}
+					tokenTimeoutObj = setTimeout( async () => {
+						await silentRefresh($session.refresh_token);
+					}, timeoutDuration);
 					AuthStore.authError.set(null);
 					if ( window.location.toString().includes('code=') ) {
 						window.location.assign($page.path);

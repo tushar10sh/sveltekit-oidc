@@ -41,6 +41,7 @@ VITE_OIDC_POST_LOGOUT_REDIRECT_URI="http://localhost:3000"
 VITE_OIDC_CLIENT_SCOPE="openid profile email hasura-claims"
 VITE_OIDC_TOKEN_REFRESH_MAX_RETRIES="5"
 VITE_REFRESH_TOKEN_ENDPOINT="/auth/refresh_token"
+VITE_REFRESH_PAGE_ON_SESSION_TIMEOUT=true
 ```
 
 ### Inside your src/global.d.ts
@@ -55,6 +56,7 @@ interface ImportMetaEnv {
     VITE_OIDC_CLIENT_SCOPE: string;
     VITE_OIDC_TOKEN_REFRESH_MAX_RETRIES: number;
     VITE_REFRESH_TOKEN_ENDPOINT: string;
+    VITE_REFRESH_PAGE_ON_SESSION_TIMEOUT: boolean;
 }
 ```
 ### REFESH_TOKEN_ENDPOINT
@@ -69,7 +71,6 @@ import {
 
 import type { Locals } from 'sveltekit-oidc/types';
 import type { RequestHandler } from '@sveltejs/kit';
-
 
 const clientSecret = process.env.VITE_OIDC_CLIENT_SECRET || import.meta.env.VITE_OIDC_CLIENT_SECRET;
 /**
@@ -113,7 +114,7 @@ export const handle: Handle<Locals>  = async ({ request, resolve }) => {
 	}
 	
 	// Set Cookie attributes
-	request.locals.cookieAttributes = 'Path=/; HttpOnly; SameSite=Strict;';
+	request.locals.cookieAttributes = 'Path=/; HttpOnly; SameSite=Lax;';
 
 	// Your code here -----------
 	if (request.query.has('_method')) {
@@ -125,15 +126,17 @@ export const handle: Handle<Locals>  = async ({ request, resolve }) => {
 
 	// After your code ends, Populate response headers with Auth Info
 	// wrap up response by over-riding headers and status
-	const extraResponse = (await userGen.next(request)).value;
-	const { Location, ...restHeaders } = extraResponse.headers;
-	// SSR Redirection
-	if ( extraResponse.status === 302 && Location ) {
-		response.status = extraResponse.status
-		response.headers['Location'] = Location;
-	}
-	response.headers = {...response.headers, ...restHeaders};
+    if ( response?.status !== 404 ) {
+		const extraResponse = (await userGen.next(request)).value;
+		const { Location, ...restHeaders } = extraResponse.headers;
+		// SSR Redirection
+		if ( extraResponse.status === 302 && Location ) {
+			response.status = extraResponse.status
+			response.headers['Location'] = Location;
+		}
+		response.headers = {...response.headers, ...restHeaders};
 
+	}
 	// Return response back
 	return response;
 };
@@ -142,7 +145,6 @@ export const handle: Handle<Locals>  = async ({ request, resolve }) => {
 /** @type {import('@sveltejs/kit').GetSession} */
 export const getSession: GetSession = async (request: ServerRequest<Locals>) => {
 	const userSession = await getUserSession(request, clientSecret);	
-	// console.log(userSession);
 	return userSession;
 }
 ```
