@@ -5,7 +5,7 @@
         OIDC_CONTEXT_POST_LOGOUT_REDIRECT_URI,
         logout,
     } from './Keycloak.svelte';
-    import type { OidcContextClientPromise } from '$lib/types';
+    import type { OidcContextClientPromise } from '../types';
 
     const oidcPromise: OidcContextClientPromise = getContext(OIDC_CONTEXT_CLIENT_PROMISE);
     const post_logout_redirect_uri: string = getContext(OIDC_CONTEXT_POST_LOGOUT_REDIRECT_URI);

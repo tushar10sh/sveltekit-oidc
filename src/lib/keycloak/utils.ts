@@ -1,5 +1,5 @@
 import type { LoadOutput } from '@sveltejs/kit';
-import type { Locals, OIDCFailureResponse, OIDCResponse, UserDetailsGeneratorFn, GetUserSessionFn} from '$lib/types';
+import type { Locals, OIDCFailureResponse, OIDCResponse, UserDetailsGeneratorFn, GetUserSessionFn} from '../types';
 import cookie from 'cookie';
 import type { ServerRequest, ServerResponse } from '@sveltejs/kit/types/hooks';
 

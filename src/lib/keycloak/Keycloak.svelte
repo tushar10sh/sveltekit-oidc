@@ -1,12 +1,28 @@
 <script context="module" lang="ts">
-    import * as AuthStore from './AuthStore';
+    // import * as AuthStore from './AuthStore';
 	import { initiateFrontChannelOIDCAuth } from './utils'; 
 	import type { Load } from '@sveltejs/kit';
-	import type { OidcContextClientFn, OidcContextClientPromise } from '$lib/types';
+	import type { OidcContextClientFn, OidcContextClientPromise } from '../types';
 
 	export const OIDC_CONTEXT_CLIENT_PROMISE = {};
 	export const OIDC_CONTEXT_REDIRECT_URI: string = ''; 
 	export const OIDC_CONTEXT_POST_LOGOUT_REDIRECT_URI: string = '';
+
+	import { writable } from 'svelte/store';
+	/**
+	* Stores
+	*/
+	export const isLoading = writable(true);
+	export const isAuthenticated = writable(false);
+	export const accessToken = writable('');
+	export const idToken = writable('');
+	export const refreshToken = writable('');
+	export const userInfo = writable({});
+	export const authError = writable(null);
+	
+	const AuthStore = {
+		isLoading, isAuthenticated, accessToken, idToken, refreshToken, userInfo, authError
+	};
 
 	export async function login(oidcPromise: OidcContextClientPromise) {
 		try {

@@ -167,7 +167,18 @@ export const getSession: GetSession = async (request: ServerRequest<Locals>) => 
     <slot></slot>
 </Keycloak>
 ```
+### Use these stores for auth information 
+```html
+<script lang="ts">
+    import { isAuthenticated, isLoading, authError, accessToken, idToken, userInfo, refreshToken } from '$lib/keycloak/Keycloak.svelte';
+</script>
 
+{#if $isAuthenticated}
+    <div>User is authenticated</div>
+{/if}
+
+<div>
+```
 ### For protected routes
 ```html
 <script lang="ts">

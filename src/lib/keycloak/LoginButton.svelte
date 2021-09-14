@@ -4,7 +4,7 @@
         OIDC_CONTEXT_CLIENT_PROMISE,
         login,
     } from './Keycloak.svelte';
-    import type { OidcContextClientPromise } from '$lib/types';
+    import type { OidcContextClientPromise } from '../types';
 
     const oidcPromise: OidcContextClientPromise = getContext(OIDC_CONTEXT_CLIENT_PROMISE)
 </script>

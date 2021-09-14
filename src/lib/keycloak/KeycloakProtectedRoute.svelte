@@ -4,7 +4,7 @@
     import { session, page } from '$app/stores';
     import { getContext } from 'svelte';
     import { OIDC_CONTEXT_CLIENT_PROMISE } from './Keycloak.svelte';
-    import type { OidcContextClientPromise } from '$lib/types';
+    import type { OidcContextClientPromise } from '../types';
     import { isTokenExpired } from './utils';
     
     let isAuthenticated = false;

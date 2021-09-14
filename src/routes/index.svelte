@@ -3,7 +3,7 @@
 </script>
 
 <script lang="ts">
-    import { isAuthenticated, isLoading, authError, accessToken } from '$lib/keycloak/AuthStore';
+    import { isAuthenticated, isLoading, authError, accessToken } from '$lib/keycloak/Keycloak.svelte';
     import LoginButton from '$lib/keycloak/LoginButton.svelte';
     import LogoutButton from '$lib/keycloak/LogoutButton.svelte';
 
