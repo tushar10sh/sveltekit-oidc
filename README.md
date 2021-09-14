@@ -63,15 +63,13 @@ interface ImportMetaEnv {
 Create a refresh_token endpoint as set in .env file (VITE_REFRESH_TOKEN_ENDPOINT) we have set /auth/refresh_token.
 As such, create file src/routes/auth/refresh_token.ts 
 ```ts
-import {
-    renewOIDCToken,
-    oidcBaseUrl,
-    clientId
-} from 'sveltekit-oidc/keycloak/utils';
+import { renewOIDCToken } from 'sveltekit-oidc';
 
 import type { Locals } from 'sveltekit-oidc/types';
 import type { RequestHandler } from '@sveltejs/kit';
 
+const oidcBaseUrl = `${import.meta.env.VITE_OIDC_ISSUER}/protocol/openid-connect`;
+const clientId = `${import.meta.env.VITE_OIDC_CLIENT_ID}`;
 const clientSecret = process.env.VITE_OIDC_CLIENT_SECRET || import.meta.env.VITE_OIDC_CLIENT_SECRET;
 /**
  * @type {import('@sveltejs/kit').RequestHandler}
@@ -96,11 +94,10 @@ import type { Handle, GetSession } from '@sveltejs/kit';
 import { 
     userDetailsGenerator,
     getUserSession
-} from 'sveltekit-oidc/keycloak/utils';
+} from 'sveltekit-oidc';
 import type { Locals } from 'sveltekit-oidc/types';
 
 import type { ServerRequest } from '@sveltejs/kit/types/hooks';
-
 
 const clientSecret = process.env.VITE_OIDC_CLIENT_SECRET || import.meta.env.VITE_OIDC_CLIENT_SECRET;
 
@@ -152,7 +149,7 @@ export const getSession: GetSession = async (request: ServerRequest<Locals>) => 
 ### Inside your src/routes/__layout.svelte component
 ```html
 <script lang="ts">
-    import Keycloak from 'sveltekit-oidc/keycloak/Keycloak.svelte';
+    import { Keycloak } from 'sveltekit-oidc';
 </script>
 
 
@@ -163,6 +160,7 @@ export const getSession: GetSession = async (request: ServerRequest<Locals>) => 
     redirect_uri={import.meta.env.VITE_OIDC_REDIRECT_URI}
     post_logout_redirect_uri={import.meta.env.VITE_OIDC_POST_LOGOUT_REDIRECT_URI}
     refresh_token_endpoint={import.meta.env.VITE_REFRESH_TOKEN_ENDPOINT}
+    refresh_page_on_session_timeout={import.meta.env.VITE_REFRESH_PAGE_ON_SESSION_TIMEOUT}
     >
     <slot></slot>
 </Keycloak>
@@ -170,20 +168,20 @@ export const getSession: GetSession = async (request: ServerRequest<Locals>) => 
 ### Use these stores for auth information 
 ```html
 <script lang="ts">
-    import { isAuthenticated, isLoading, authError, accessToken, idToken, userInfo, refreshToken } from '$lib/keycloak/Keycloak.svelte';
+    import { isAuthenticated, isLoading, authError, accessToken, idToken, userInfo, refreshToken, LoginButton } from 'sveltekit-oidc';
 </script>
 
 {#if $isAuthenticated}
     <div>User is authenticated</div>
+{:else}
+    <LoginButton class="btn btn-primary">Login</LoginButton>
 {/if}
-
 <div>
 ```
 ### For protected routes
 ```html
 <script lang="ts">
-    import KeycloakProtectedRoute from 'sveltekit-oidc/keycloak/KeycloakProtectedRoute.svelte';
-    import LogoutButton from 'sveltekit-oidc/keycloak/LogoutButton.svelte';
+    import { KeycloakProtectedRoute, LogoutButton } from 'sveltekit-oidc';
 </script>
 
 <KeycloakProtectedRoute>
@@ -191,7 +189,7 @@ export const getSession: GetSession = async (request: ServerRequest<Locals>) => 
 
         This is a protected page
 
-        <LogoutButton>Logout</LogoutButton>
+        <LogoutButton class="btn btn-primary">Logout</LogoutButton>
     </div>
 </KeycloakProtectedRoute>
 ```

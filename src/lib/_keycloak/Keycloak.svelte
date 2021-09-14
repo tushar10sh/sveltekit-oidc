@@ -1,5 +1,4 @@
 <script context="module" lang="ts">
-    // import * as AuthStore from './AuthStore';
 	import { initiateFrontChannelOIDCAuth } from './utils'; 
 	import type { Load } from '@sveltejs/kit';
 	import type { OidcContextClientFn, OidcContextClientPromise } from '../types';
@@ -129,7 +128,8 @@
 	export let post_logout_redirect_uri: string;
     export let scope:string;
 	export let refresh_token_endpoint: string;
-	
+	export let refresh_page_on_session_timeout: boolean = false;
+
 	const oidcBaseUrl = `${issuer}/protocol/openid-connect`;
 
 	const oidc_func: OidcContextClientFn = (request_path?: string, request_params?: Record<string, string>) => {
@@ -203,7 +203,7 @@
 				error: e?.error,
 				error_description: e?.error_description
 			});
-			if ( import.meta.env?.VITE_REFRESH_PAGE_ON_SESSION_TIMEOUT ) {
+			if ( refresh_page_on_session_timeout ) {
 				window.location.assign($page.path);
 			}
 		}
@@ -222,7 +222,7 @@
 							error: 'invalid_grant',
 							error_description: 'Session is not active'
 						});
-						if ( import.meta.env?.VITE_REFRESH_PAGE_ON_SESSION_TIMEOUT ) {
+						if ( refresh_page_on_session_timeout ) {
 							window.location.assign($page.path);
 						} 
 					}

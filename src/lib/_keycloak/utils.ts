@@ -1,11 +1,10 @@
 import type { LoadOutput } from '@sveltejs/kit';
 import type { Locals, OIDCFailureResponse, OIDCResponse, UserDetailsGeneratorFn, GetUserSessionFn} from '../types';
-import cookie from 'cookie';
+import { parseCookie } from './cookie';
 import type { ServerRequest, ServerResponse } from '@sveltejs/kit/types/hooks';
 
 export const oidcBaseUrl = `${import.meta.env.VITE_OIDC_ISSUER}/protocol/openid-connect`;
 export const clientId = `${import.meta.env.VITE_OIDC_CLIENT_ID}`;
-
 let appRedirectUrl = import.meta.env.VITE_OIDC_REDIRECT_URI;
 
 export function isTokenExpired(jwt: string): boolean {
@@ -108,7 +107,6 @@ export async function initiateBackChannelOIDCLogout(access_token: string, client
             error: null,
             error_description: null
         }
-        console.log('Logout Request sucess');
     } else {
         const error_data: OIDCResponse = await res.json();
         console.log('logout response not ok');
@@ -282,9 +280,9 @@ const isAuthInfoInvalid = (obj) => {
 
 export const userDetailsGenerator: UserDetailsGeneratorFn = async function* (request: ServerRequest<Locals>, clientSecret: string) {
     console.log('Request path:', request.path);
-	const cookies = request.headers.cookie ? cookie.parse(request.headers.cookie || '') : null;
+	const cookies = request.headers.cookie ? parseCookie(request.headers.cookie || '') : null;
 	// console.log(cookies);
-	const userInfo = cookies?.userInfo ? JSON.parse(cookies.userInfo) : {};
+	const userInfo = cookies?.['userInfo'] ? JSON.parse(cookies?.['userInfo']) : {};
     request.locals.retries = 0;
 	request.locals.authError = {
 		error: null,

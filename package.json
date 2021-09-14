@@ -1,6 +1,6 @@
 {
 	"name": "sveltekit-oidc",
-	"version": "0.0.6",
+	"version": "0.0.7",
 	"scripts": {
 		"dev": "svelte-kit dev",
 		"build": "svelte-kit build",
@@ -10,18 +10,19 @@
 		"check:watch": "svelte-check --tsconfig ./tsconfig.json --watch"
 	},
 	"devDependencies": {
-		"@sveltejs/kit": "next",
-		"autoprefixer": "^10.2.6",
-		"cssnano": "^5.0.6",
-		"postcss": "^8.3.5",
+		"@sveltejs/kit": "^1.0.0-next.166",
+		"@types/cookie": "^0.4.1",
+		"autoprefixer": "^10.3.4",
+		"cssnano": "^5.0.8",
+		"postcss": "^8.3.6",
 		"postcss-load-config": "^3.1.0",
-		"svelte": "^3.34.0",
-		"svelte-check": "^2.0.0",
-		"svelte-preprocess": "^4.7.3",
-		"svelte2tsx": "^0.4.5",
-		"tailwindcss": "^2.2.4",
-		"tslib": "^2.0.0",
-		"typescript": "^4.3.5"
+		"svelte": "^3.42.5",
+		"svelte-check": "^2.2.6",
+		"svelte-preprocess": "^4.9.4",
+		"svelte2tsx": "^0.4.6",
+		"tailwindcss": "^2.2.15",
+		"tslib": "^2.3.1",
+		"typescript": "^4.4.3"
 	},
 	"license": "MIT",
 	"keywords": [
@@ -37,7 +38,5 @@
 	"author": "Tushar Shukla",
 	"repository": "https://github.com/tushar10sh/sveltekit-oidc.git",
 	"type": "module",
-	"dependencies": {
-		"cookie": "^0.4.1"
-	}
+	"dependencies": {}
 }

@@ -3,14 +3,9 @@
 </script>
 
 <script lang="ts">
-    import { isAuthenticated, isLoading, authError, accessToken } from '$lib/keycloak/Keycloak.svelte';
-    import LoginButton from '$lib/keycloak/LoginButton.svelte';
-    import LogoutButton from '$lib/keycloak/LogoutButton.svelte';
-
-    import KeycloakProtectedRoute from '$lib/keycloak/KeycloakProtectedRoute.svelte';
+    import { isAuthenticated, isLoading, authError, accessToken, LoginButton, LogoutButton } from '$lib';
 
     let access_token_elem;
-    // let access_token_copy_btn;
     let is_access_token_copied = false;
     function copyAccessTokenToClipboard() {
         if ( access_token_elem ) {
@@ -22,10 +17,8 @@
                 selection.addRange(range);
                 document.execCommand('copy');
                 selection.removeAllRanges();
-                // access_token_copy_btn.innerHTML = 'Copied!';
                 is_access_token_copied = true;
                 setTimeout(() => {
-                    // access_token_copy_btn.innerHTML = 'Copy';
                     is_access_token_copied = false;
                 }, 1000);
             } catch(e) {
@@ -53,7 +46,7 @@
                     {/if}
                 </div>
             </div>
-            <LogoutButton>Logout</LogoutButton>
+            <LogoutButton class="btn btn-primary">Logout</LogoutButton>
         </section>
     {:else if $authError} 
         <section class="p-5 rounded-lg bg-red-400">
@@ -66,7 +59,7 @@
     {:else}
         <section class="px-10 py-5 shadow-md rounded-lg bg-pink-400 text-white font-mono font-semibold flex flex-col justify-center items-center">
             <p class="block p-2">NO AUTH AVAILABLE</p>
-            <LoginButton>Login</LoginButton>
+            <LoginButton class="btn btn-primary">Login</LoginButton>
         </section>
     {/if}
 </main>

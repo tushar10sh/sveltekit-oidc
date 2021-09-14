@@ -2,12 +2,15 @@ import type { Handle, GetSession } from '@sveltejs/kit';
 import { 
 	userDetailsGenerator,
 	getUserSession
-} from '$lib/keycloak/utils';
+} from '$lib';
 
 import type { Locals } from '$lib/types';
 
 import type { ServerRequest } from '@sveltejs/kit/types/hooks';
 
+// const oidcBaseUrl = `${import.meta.env.VITE_OIDC_ISSUER}/protocol/openid-connect`;
+// const clientId = `${import.meta.env.VITE_OIDC_CLIENT_ID}`;
+// const appRedirectUrl = import.meta.env.VITE_OIDC_REDIRECT_URI;
 const clientSecret = process.env.VITE_OIDC_CLIENT_SECRET || import.meta.env.VITE_OIDC_CLIENT_SECRET;
 
 export const handle: Handle<Locals>  = async ({ request, resolve }) => {
